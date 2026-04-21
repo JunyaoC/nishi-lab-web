@@ -1,5 +1,6 @@
 name = "nishi-lab-web"
 compatibility_date = "2026-04-01"
+account_id = "d5dc1a9955d670a0ef6ae7e1fb95ff90"
 
 [assets]
 directory = "./dist"
