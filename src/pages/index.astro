@@ -1,0 +1,57 @@
+---
+import Layout from "~/layouts/Layout.astro";
+import type { Trigram, Hexagram } from "~/types";
+import trigramsJson from "~/data/trigrams.json";
+import hexagramsJson from "~/data/hexagrams.json";
+import metaJson from "~/data/meta.json";
+import YaoStack from "~/components/YaoStack.astro";
+
+const trigrams = trigramsJson as unknown as Trigram[];
+const hexagrams = hexagramsJson as unknown as Hexagram[];
+const meta = metaJson as unknown as { generated_at: string; counts: Record<string, number> };
+---
+
+<Layout>
+  <section>
+    <h1>天紀 · 易卦資料庫</h1>
+    <p style="color:var(--fg-dim); max-width: 680px;">
+      倪師天紀課程中的易卦符號系統 — 八卦為原子，六十四卦為組合，三道（人間／天機／地脈）為應用層。所有條目皆附出處。
+    </p>
+    <p style="color:var(--fg-muted); font-family: var(--mono); font-size: 12px; margin-top: 20px;">
+      {meta.counts.trigrams} 單卦 · {meta.counts.hexagrams} 重卦 · {meta.counts.notes} 條註解 · 更新於 {meta.generated_at.split("T")[0]}
+    </p>
+  </section>
+
+  <section id="trigrams">
+    <h2>八卦 · 先天數序</h2>
+    <div class="trigram-grid">
+      {trigrams.map((t) => (
+        <a href={`/trigrams/${t.id}`} class="trigram-card">
+          <YaoStack binary={t.binary} size="lg" />
+          <div class="chinese">{t.chinese} <span style="color:var(--fg-muted); font-size: 14px; font-family: var(--mono);">{t.pinyin}</span></div>
+          <div class="meta">#{t.id} · {t.yin_yang} · {t.element}</div>
+          <div class="attrs">
+            <span>{t.nature}</span>
+            <span>{t.virtue}</span>
+            <span>{t.family_role}</span>
+            <span>{t.post_heaven_position}</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section id="hexagrams">
+    <h2>六十四卦 · 文王序</h2>
+    <div class="hex-grid">
+      {hexagrams.map((h) => (
+        <a href={`/hexagrams/${h.id}`} class="hex-cell" title={`${h.id}. ${h.fullname}`}>
+          <span class="num">{h.id}</span>
+          <YaoStack binary={h.binary} size="sm" />
+          <span class="name">{h.chinese}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+</Layout>

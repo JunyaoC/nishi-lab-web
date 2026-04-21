@@ -1,0 +1,14 @@
+---
+interface Props {
+  binary: string;
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  class?: string;
+}
+const { binary, size = "md", class: klass } = Astro.props;
+---
+
+<div class:list={["yao-stack", `yao-stack-${size}`, klass]} aria-label={binary}>
+  {binary.split("").map((bit) => (
+    <div class:list={["yao", bit === "1" ? "yang" : "yin"]}></div>
+  ))}
+</div>

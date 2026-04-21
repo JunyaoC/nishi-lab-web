@@ -1,0 +1,127 @@
+---
+import Layout from "~/layouts/Layout.astro";
+import type { Trigram, Note } from "~/types";
+import trigramsJson from "~/data/trigrams.json";
+import YaoStack from "~/components/YaoStack.astro";
+
+const trigrams = trigramsJson as unknown as Trigram[];
+
+export async function getStaticPaths() {
+  const { default: data } = await import("~/data/trigrams.json");
+  return (data as unknown as Trigram[]).map((t) => ({ params: { id: String(t.id) } }));
+}
+
+const { id } = Astro.params;
+const trigram = trigrams.find((t) => String(t.id) === id)!;
+
+const attrs: Array<[string, string | number | null]> = [
+  ["家庭位", trigram.family_role],
+  ["卦德", trigram.virtue],
+  ["自然象", trigram.nature],
+  ["五行", trigram.element],
+  ["身體", trigram.body_part],
+  ["動物", trigram.animal],
+  ["先天位", trigram.pre_heaven_position],
+  ["後天位", trigram.post_heaven_position],
+  ["先天數", trigram.pre_heaven_number],
+  ["後天數", trigram.post_heaven_number],
+  ["顏色", trigram.color],
+  ["味", trigram.taste],
+];
+
+const noteGroups = trigram.notes.reduce<Record<string, Note[]>>((acc, n) => {
+  const k = n.note_type ?? "other";
+  (acc[k] ||= []).push(n);
+  return acc;
+}, {});
+
+const groupOrder = ["principle", "structure", "body", "animal", "application", "warning", "saying", "other"];
+const groupLabels: Record<string, string> = {
+  principle: "原理",
+  structure: "結構",
+  body: "身體對應",
+  animal: "動物對應",
+  application: "應用",
+  warning: "警示",
+  saying: "格言",
+  other: "其他",
+};
+---
+
+<Layout title={`${trigram.chinese} · 八卦`}>
+  <div class="detail-hero">
+    <YaoStack binary={trigram.binary} size="xl" />
+    <div class="title">
+      <h1>{trigram.chinese}</h1>
+      <div class="sub">#{trigram.id} · {trigram.pinyin} · 後天數 {trigram.post_heaven_number}</div>
+      <div class="tag-row">
+        <span class={`tag ${trigram.yin_yang === "陽" ? "yang" : "yin"}`}>{trigram.yin_yang}</span>
+        <span class="tag">{trigram.nature}</span>
+        <span class="tag">{trigram.element}</span>
+        <span class="tag">{trigram.family_role}</span>
+      </div>
+    </div>
+  </div>
+
+  {trigram.yao_generation_rule && (
+    <div class="rule-block">
+      爻位生成 · {trigram.yao_generation_rule}
+    </div>
+  )}
+
+  <h2>屬性</h2>
+  <div class="attr-grid">
+    {attrs.map(([k, v]) => (
+      <div class="attr">
+        <div class="k">{k}</div>
+        <div class="v">{v ?? "—"}</div>
+      </div>
+    ))}
+    <div class="attr">
+      <div class="k">二進制</div>
+      <div class="v" style="font-family:var(--mono);">{trigram.binary}</div>
+    </div>
+    <div class="attr">
+      <div class="k">陰陽</div>
+      <div class="v">{trigram.yin_yang}</div>
+    </div>
+  </div>
+
+  {trigram.ni_emphasis && (
+    <>
+      <h2>倪師強調</h2>
+      <div class="ni-block">
+        {trigram.ni_emphasis}
+        {trigram.ni_emphasis_source && (
+          <div class="src">出處 · {trigram.ni_emphasis_source}</div>
+        )}
+      </div>
+    </>
+  )}
+
+  <h2>註解 <span style="font-family:var(--mono); font-size:14px; color:var(--fg-muted);">({trigram.notes.length})</span></h2>
+  {groupOrder
+    .filter((g) => noteGroups[g])
+    .map((g) => (
+      <div class="notes-group">
+        <h3>{groupLabels[g] ?? g}</h3>
+        {noteGroups[g].map((n) => (
+          <div class="note">
+            {n.content}
+            <div class="src">{n.source}</div>
+          </div>
+        ))}
+      </div>
+    ))}
+
+  {trigram.extras && (
+    <>
+      <h2>補充</h2>
+      <div class="ni-block" style="white-space:pre-wrap; font-family:var(--serif);">
+        {JSON.stringify(trigram.extras, null, 2)}
+      </div>
+    </>
+  )}
+
+  <p style="margin-top: 40px;"><a href="/">← 回總覽</a></p>
+</Layout>

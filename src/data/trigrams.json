@@ -1,0 +1,659 @@
+[
+  {
+    "id": 1,
+    "chinese": "乾",
+    "pinyin": "qian",
+    "symbol": "☰",
+    "binary": "111",
+    "yin_yang": "陽",
+    "nature": "天",
+    "virtue": "健",
+    "family_role": "父",
+    "body_part": "頭",
+    "animal": "馬",
+    "element": "金",
+    "pre_heaven_position": "南",
+    "post_heaven_position": "西北",
+    "pre_heaven_number": 1,
+    "post_heaven_number": 6,
+    "color": "大赤",
+    "taste": "辛",
+    "yao_generation_rule": "三爻皆陽，純陽實心，至剛至健",
+    "ni_emphasis": "天性向下——陽之極反求內充，不外顯。\n代表剛、健、實心、充實自己。\n處世：剛正，守原則，要往下看。\n",
+    "ni_emphasis_source": "renjiandao_03",
+    "extras": {
+      "卦辭爻辭要點": {
+        "source": "renjiandao_04 + 人間道一頁",
+        "content": "六爻全陽（乾為天）：\n  初爻（下民）—潛龍勿用\n  二爻（將領）—心性不隨不變，適合教有益的朋友\n  三爻（相）—進德修業\n  四爻（宰）—待機而動，外地比本地好\n  五爻（君）—飛龍在天\n  上爻（過）—亢龍有悔\n"
+      },
+      "五行歸類依據": "乾為金（標準配屬），與兌同屬金",
+      "先天方位依據": "伏羲先天八卦圖——乾南坤北、離東坎西"
+    },
+    "notes": [
+      {
+        "id": 1,
+        "entity_type": "trigram",
+        "entity_id": "1",
+        "note_type": "principle",
+        "content": "乾坤德同法異——乾是剛健，坤是柔順",
+        "source": "renjiandao_04"
+      },
+      {
+        "id": 2,
+        "entity_type": "trigram",
+        "entity_id": "1",
+        "note_type": "saying",
+        "content": "為人處事最佳方式——外順內剛（剛健）",
+        "source": "renjiandao_03"
+      },
+      {
+        "id": 3,
+        "entity_type": "trigram",
+        "entity_id": "1",
+        "note_type": "structure",
+        "content": "伏羲氏制定先天八卦圖為體，周文王制定後天八卦圖為用",
+        "source": "renjiandao_02"
+      },
+      {
+        "id": 4,
+        "entity_type": "trigram",
+        "entity_id": "1",
+        "note_type": "body",
+        "content": "乾為首",
+        "source": "shuogua"
+      },
+      {
+        "id": 5,
+        "entity_type": "trigram",
+        "entity_id": "1",
+        "note_type": "animal",
+        "content": "乾為馬",
+        "source": "shuogua"
+      },
+      {
+        "id": 6,
+        "entity_type": "trigram",
+        "entity_id": "1",
+        "note_type": "application",
+        "content": "父居父位（西北角臥房）為乾為天本位——做官平步青雲、商人財多祿豐、父親對家人有責任心",
+        "source": "dimaidao_01"
+      },
+      {
+        "id": 7,
+        "entity_type": "trigram",
+        "entity_id": "1",
+        "note_type": "principle",
+        "content": "1、3、5 爻位為陽位；2、4、6 爻位為陰位",
+        "source": "renjiandao_04"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "chinese": "兌",
+    "pinyin": "dui",
+    "symbol": "☱",
+    "binary": "011",
+    "yin_yang": "陰",
+    "nature": "澤",
+    "virtue": "悅",
+    "family_role": "少女",
+    "body_part": "口",
+    "animal": "羊",
+    "element": "金",
+    "pre_heaven_position": "東南",
+    "post_heaven_position": "正西",
+    "pre_heaven_number": 2,
+    "post_heaven_number": 7,
+    "color": "白",
+    "taste": "辛",
+    "yao_generation_rule": "陰爻在上為悅之象——一陰柔居上方，故有喜悅、口舌、少女之象",
+    "ni_emphasis": "兌——澤、悅、三女（少女）。\n",
+    "ni_emphasis_source": "renjiandao_03",
+    "extras": {
+      "五行歸類依據": "兌為金，與乾同屬金"
+    },
+    "notes": [
+      {
+        "id": 8,
+        "entity_type": "trigram",
+        "entity_id": "2",
+        "note_type": "principle",
+        "content": "陰爻在上為悅的象",
+        "source": "renjiandao_02"
+      },
+      {
+        "id": 9,
+        "entity_type": "trigram",
+        "entity_id": "2",
+        "note_type": "body",
+        "content": "兌為口",
+        "source": "shuogua"
+      },
+      {
+        "id": 10,
+        "entity_type": "trigram",
+        "entity_id": "2",
+        "note_type": "animal",
+        "content": "兌為羊",
+        "source": "shuogua"
+      },
+      {
+        "id": 11,
+        "entity_type": "trigram",
+        "entity_id": "2",
+        "note_type": "structure",
+        "content": "後天八卦：兌居正西，少女位",
+        "source": "renjiandao_01"
+      },
+      {
+        "id": 12,
+        "entity_type": "trigram",
+        "entity_id": "2",
+        "note_type": "application",
+        "content": "父居三女位（正西臥房）→ 天澤履——事業進退兩難、官運不前、妻能力強過自己，婚姻凶",
+        "source": "dimaidao_08"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "chinese": "離",
+    "pinyin": "li",
+    "symbol": "☲",
+    "binary": "101",
+    "yin_yang": "陰",
+    "nature": "火",
+    "virtue": "麗",
+    "family_role": "中女",
+    "body_part": "目",
+    "animal": "雉",
+    "element": "火",
+    "pre_heaven_position": "正東",
+    "post_heaven_position": "正南",
+    "pre_heaven_number": 3,
+    "post_heaven_number": 9,
+    "color": "赤",
+    "taste": "苦",
+    "yao_generation_rule": "陰爻在中虛為麗之象——外陽內陰、外明中虛，如火之外亮內空",
+    "ni_emphasis": "離——火、二女（中女）、外明麗中虛。\n太過凶，太小不及。\n",
+    "ni_emphasis_source": "renjiandao_03",
+    "extras": null,
+    "notes": [
+      {
+        "id": 13,
+        "entity_type": "trigram",
+        "entity_id": "3",
+        "note_type": "principle",
+        "content": "陰爻在中虛為麗的象",
+        "source": "renjiandao_02"
+      },
+      {
+        "id": 14,
+        "entity_type": "trigram",
+        "entity_id": "3",
+        "note_type": "body",
+        "content": "離為目",
+        "source": "shuogua"
+      },
+      {
+        "id": 15,
+        "entity_type": "trigram",
+        "entity_id": "3",
+        "note_type": "animal",
+        "content": "離為雉",
+        "source": "shuogua"
+      },
+      {
+        "id": 16,
+        "entity_type": "trigram",
+        "entity_id": "3",
+        "note_type": "structure",
+        "content": "後天八卦：離居正南，中女位",
+        "source": "renjiandao_01"
+      },
+      {
+        "id": 17,
+        "entity_type": "trigram",
+        "entity_id": "3",
+        "note_type": "principle",
+        "content": "五行——離屬火；木（震巽）生火（離），火生土（坤艮）",
+        "source": "renjiandao_02"
+      },
+      {
+        "id": 18,
+        "entity_type": "trigram",
+        "entity_id": "3",
+        "note_type": "application",
+        "content": "父居中女位（正南臥房）→ 天火同人——已婚男人唯一發科甲之卦，考試金榜題名；睡覺時腳朝文昌、文曲、天鉞、天魁、化科所在宮位",
+        "source": "dimaidao_09"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "chinese": "震",
+    "pinyin": "zhen",
+    "symbol": "☳",
+    "binary": "001",
+    "yin_yang": "陽",
+    "nature": "雷",
+    "virtue": "動",
+    "family_role": "長男",
+    "body_part": "足",
+    "animal": "龍",
+    "element": "木",
+    "pre_heaven_position": "東北",
+    "post_heaven_position": "正東",
+    "pre_heaven_number": 4,
+    "post_heaven_number": 3,
+    "color": "玄黃",
+    "taste": "酸",
+    "yao_generation_rule": "陽爻在初為動之象——一陽初動於下，雷出地奮",
+    "ni_emphasis": "震——雷、長男、動。\n",
+    "ni_emphasis_source": "renjiandao_03",
+    "extras": null,
+    "notes": [
+      {
+        "id": 19,
+        "entity_type": "trigram",
+        "entity_id": "4",
+        "note_type": "principle",
+        "content": "陽爻在初為動的象",
+        "source": "renjiandao_02"
+      },
+      {
+        "id": 20,
+        "entity_type": "trigram",
+        "entity_id": "4",
+        "note_type": "body",
+        "content": "震為足",
+        "source": "shuogua"
+      },
+      {
+        "id": 21,
+        "entity_type": "trigram",
+        "entity_id": "4",
+        "note_type": "animal",
+        "content": "震為龍",
+        "source": "shuogua"
+      },
+      {
+        "id": 22,
+        "entity_type": "trigram",
+        "entity_id": "4",
+        "note_type": "structure",
+        "content": "後天八卦：震居正東，長男位",
+        "source": "renjiandao_01"
+      },
+      {
+        "id": 23,
+        "entity_type": "trigram",
+        "entity_id": "4",
+        "note_type": "principle",
+        "content": "五行——震屬木；水生木（震、巽）",
+        "source": "renjiandao_02"
+      },
+      {
+        "id": 24,
+        "entity_type": "trigram",
+        "entity_id": "4",
+        "note_type": "warning",
+        "content": "阳宅——正東是廚房主長子夭折（解法：將正東改為臥房）",
+        "source": "dimaidao_06"
+      },
+      {
+        "id": 25,
+        "entity_type": "trigram",
+        "entity_id": "4",
+        "note_type": "application",
+        "content": "因時而動：有變化就要補位，長子結婚後，二子要補到長子的位置",
+        "source": "renjiandao_02"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "chinese": "巽",
+    "pinyin": "xun",
+    "symbol": "☴",
+    "binary": "110",
+    "yin_yang": "陰",
+    "nature": "風",
+    "virtue": "入",
+    "family_role": "長女",
+    "body_part": "股",
+    "animal": "雞",
+    "element": "木",
+    "pre_heaven_position": "西南",
+    "post_heaven_position": "東南",
+    "pre_heaven_number": 5,
+    "post_heaven_number": 4,
+    "color": "白",
+    "taste": "酸",
+    "yao_generation_rule": "陰爻在初為巽（風）之象——一陰伏於下，如風無孔不入",
+    "ni_emphasis": "巽——風、順、入（無孔不入）。\n",
+    "ni_emphasis_source": "renjiandao_03",
+    "extras": null,
+    "notes": [
+      {
+        "id": 26,
+        "entity_type": "trigram",
+        "entity_id": "5",
+        "note_type": "principle",
+        "content": "陰爻在初為巽（風）的象",
+        "source": "renjiandao_02"
+      },
+      {
+        "id": 27,
+        "entity_type": "trigram",
+        "entity_id": "5",
+        "note_type": "body",
+        "content": "巽為股",
+        "source": "shuogua"
+      },
+      {
+        "id": 28,
+        "entity_type": "trigram",
+        "entity_id": "5",
+        "note_type": "animal",
+        "content": "巽為雞",
+        "source": "shuogua"
+      },
+      {
+        "id": 29,
+        "entity_type": "trigram",
+        "entity_id": "5",
+        "note_type": "structure",
+        "content": "後天八卦：巽居東南，長女位",
+        "source": "renjiandao_01"
+      },
+      {
+        "id": 30,
+        "entity_type": "trigram",
+        "entity_id": "5",
+        "note_type": "principle",
+        "content": "五行——巽屬木；水生木（震、巽）",
+        "source": "renjiandao_02"
+      },
+      {
+        "id": 31,
+        "entity_type": "trigram",
+        "entity_id": "5",
+        "note_type": "application",
+        "content": "長女居父位（西北角臥房）→ 風天小畜——重事業不重婚姻、女代父職、能力強過男人、事業有成",
+        "source": "dimaidao_07"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "chinese": "坎",
+    "pinyin": "kan",
+    "symbol": "☵",
+    "binary": "010",
+    "yin_yang": "陽",
+    "nature": "水",
+    "virtue": "陷",
+    "family_role": "中男",
+    "body_part": "耳",
+    "animal": "豕",
+    "element": "水",
+    "pre_heaven_position": "正西",
+    "post_heaven_position": "正北",
+    "pre_heaven_number": 6,
+    "post_heaven_number": 1,
+    "color": "黑",
+    "taste": "鹹",
+    "yao_generation_rule": "陽爻在中為陷之象——一陽陷於二陰之中，如水流陷於岸",
+    "ni_emphasis": "坎——水、陷、險、二男（中男）、至誠至剛。\n",
+    "ni_emphasis_source": "renjiandao_03",
+    "extras": null,
+    "notes": [
+      {
+        "id": 32,
+        "entity_type": "trigram",
+        "entity_id": "6",
+        "note_type": "principle",
+        "content": "陽爻在中為陷的象",
+        "source": "renjiandao_02"
+      },
+      {
+        "id": 33,
+        "entity_type": "trigram",
+        "entity_id": "6",
+        "note_type": "body",
+        "content": "坎為耳",
+        "source": "shuogua"
+      },
+      {
+        "id": 34,
+        "entity_type": "trigram",
+        "entity_id": "6",
+        "note_type": "animal",
+        "content": "坎為豕",
+        "source": "shuogua"
+      },
+      {
+        "id": 35,
+        "entity_type": "trigram",
+        "entity_id": "6",
+        "note_type": "structure",
+        "content": "後天八卦：坎居正北，中男位",
+        "source": "renjiandao_01"
+      },
+      {
+        "id": 36,
+        "entity_type": "trigram",
+        "entity_id": "6",
+        "note_type": "principle",
+        "content": "五行——坎屬水；金生水（坎），水生木",
+        "source": "renjiandao_02"
+      },
+      {
+        "id": 37,
+        "entity_type": "trigram",
+        "entity_id": "6",
+        "note_type": "principle",
+        "content": "坎水至誠至剛——水看似柔，實則至剛（與乾之剛同德異法）",
+        "source": "renjiandao_03"
+      },
+      {
+        "id": 38,
+        "entity_type": "trigram",
+        "entity_id": "6",
+        "note_type": "warning",
+        "content": "阳宅——一般正北臥室不住人，可以放祖先牌位",
+        "source": "dimaidao_06"
+      },
+      {
+        "id": 39,
+        "entity_type": "trigram",
+        "entity_id": "6",
+        "note_type": "application",
+        "content": "二子居正北臥房（坎為水）→ 以行險為樂；屬牛虎則吉；屬老鼠住暗中生害；常有牢獄、官司——最好改住正南臥房",
+        "source": "dimaidao_14"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "chinese": "艮",
+    "pinyin": "gen",
+    "symbol": "☶",
+    "binary": "100",
+    "yin_yang": "陽",
+    "nature": "山",
+    "virtue": "止",
+    "family_role": "少男",
+    "body_part": "手",
+    "animal": "狗",
+    "element": "土",
+    "pre_heaven_position": "西北",
+    "post_heaven_position": "東北",
+    "pre_heaven_number": 7,
+    "post_heaven_number": 8,
+    "color": "黃",
+    "taste": "甘",
+    "yao_generation_rule": "陽爻在上為止之象——一陽盤踞於上，如山峰靜止",
+    "ni_emphasis": "艮——山、止、大、三男（少男）。\n",
+    "ni_emphasis_source": "renjiandao_03",
+    "extras": null,
+    "notes": [
+      {
+        "id": 40,
+        "entity_type": "trigram",
+        "entity_id": "7",
+        "note_type": "principle",
+        "content": "陽爻在上為止的象",
+        "source": "renjiandao_02"
+      },
+      {
+        "id": 41,
+        "entity_type": "trigram",
+        "entity_id": "7",
+        "note_type": "body",
+        "content": "艮為手",
+        "source": "shuogua"
+      },
+      {
+        "id": 42,
+        "entity_type": "trigram",
+        "entity_id": "7",
+        "note_type": "animal",
+        "content": "艮為狗",
+        "source": "shuogua"
+      },
+      {
+        "id": 43,
+        "entity_type": "trigram",
+        "entity_id": "7",
+        "note_type": "structure",
+        "content": "後天八卦：艮居東北，少男位",
+        "source": "renjiandao_01"
+      },
+      {
+        "id": 44,
+        "entity_type": "trigram",
+        "entity_id": "7",
+        "note_type": "principle",
+        "content": "五行——艮屬土；火生土（坤、艮）",
+        "source": "renjiandao_02"
+      },
+      {
+        "id": 45,
+        "entity_type": "trigram",
+        "entity_id": "7",
+        "note_type": "application",
+        "content": "兩代人同住一屋簷下——年輕夫妻住西北角坤卦位、父母住東北角艮卦位，家和萬事興",
+        "source": "dimaidao_05"
+      },
+      {
+        "id": 46,
+        "entity_type": "trigram",
+        "entity_id": "7",
+        "note_type": "application",
+        "content": "母居東北角（地山謙）——65 歲以前住不吉：夫妻感情退化、外飾清明內實小人、所思不成、頭痛勞多成疾、目帶凶光",
+        "source": "dimaidao_10"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "chinese": "坤",
+    "pinyin": "kun",
+    "symbol": "☷",
+    "binary": "000",
+    "yin_yang": "陰",
+    "nature": "地",
+    "virtue": "順",
+    "family_role": "母",
+    "body_part": "腹",
+    "animal": "牛",
+    "element": "土",
+    "pre_heaven_position": "北",
+    "post_heaven_position": "西南",
+    "pre_heaven_number": 8,
+    "post_heaven_number": 2,
+    "color": "黃",
+    "taste": "甘",
+    "yao_generation_rule": "三爻皆陰，純陰柔順，含章之美",
+    "ni_emphasis": "坤——順、柔、地；含章之美；始終如一。\n德與乾同，法與乾異（乾剛健、坤柔順）。\n",
+    "ni_emphasis_source": "renjiandao_03",
+    "extras": null,
+    "notes": [
+      {
+        "id": 47,
+        "entity_type": "trigram",
+        "entity_id": "8",
+        "note_type": "principle",
+        "content": "乾坤德同法異——心是一樣，只是法不同",
+        "source": "renjiandao_04"
+      },
+      {
+        "id": 48,
+        "entity_type": "trigram",
+        "entity_id": "8",
+        "note_type": "body",
+        "content": "坤為腹",
+        "source": "shuogua"
+      },
+      {
+        "id": 49,
+        "entity_type": "trigram",
+        "entity_id": "8",
+        "note_type": "animal",
+        "content": "坤為牛",
+        "source": "shuogua"
+      },
+      {
+        "id": 50,
+        "entity_type": "trigram",
+        "entity_id": "8",
+        "note_type": "structure",
+        "content": "後天八卦：坤居西南，母親位",
+        "source": "renjiandao_01"
+      },
+      {
+        "id": 51,
+        "entity_type": "trigram",
+        "entity_id": "8",
+        "note_type": "principle",
+        "content": "五行——坤屬土；火生土（坤、艮）",
+        "source": "renjiandao_02"
+      },
+      {
+        "id": 52,
+        "entity_type": "trigram",
+        "entity_id": "8",
+        "note_type": "application",
+        "content": "母居母位（西南角臥房）→ 坤為地本位——孤軍奮戰、官家掌權、商人賺錢易如反掌、女強人型；單居者孤僻到老",
+        "source": "dimaidao_01"
+      },
+      {
+        "id": 53,
+        "entity_type": "trigram",
+        "entity_id": "8",
+        "note_type": "application",
+        "content": "母居父位（西北角）→ 地天泰——夫妻感情非常好、一世夫妻白首到老、在家相夫教子、一生無大病；最好結婚當晚即住",
+        "source": "dimaidao_08"
+      },
+      {
+        "id": 54,
+        "entity_type": "trigram",
+        "entity_id": "8",
+        "note_type": "saying",
+        "content": "經商用母親的名字做負責人，對公司大利（坤含章、順而廣）",
+        "source": "dimaidao_01"
+      },
+      {
+        "id": 55,
+        "entity_type": "trigram",
+        "entity_id": "8",
+        "note_type": "warning",
+        "content": "母獨居房子主西北角——代表母代父職，辛苦，孤星到老",
+        "source": "dimaidao_08"
+      }
+    ]
+  }
+]

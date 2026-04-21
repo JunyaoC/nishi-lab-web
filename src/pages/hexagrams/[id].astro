@@ -1,0 +1,899 @@
+---
+import Layout from "~/layouts/Layout.astro";
+import type { Hexagram, Trigram, Note } from "~/types";
+import hexagramsJson from "~/data/hexagrams.json";
+import trigramsJson from "~/data/trigrams.json";
+import YaoStack from "~/components/YaoStack.astro";
+
+const hexagrams = hexagramsJson as unknown as Hexagram[];
+const trigrams = trigramsJson as unknown as Trigram[];
+
+export async function getStaticPaths() {
+  const { default: data } = await import("~/data/hexagrams.json");
+  return (data as unknown as Hexagram[]).map((h) => ({ params: { id: String(h.id) } }));
+}
+
+const { id } = Astro.params;
+const hex = hexagrams.find((h) => String(h.id) === id)!;
+const upper = trigrams.find((t) => t.id === hex.upper_trigram)!;
+const lower = trigrams.find((t) => t.id === hex.lower_trigram)!;
+const isPure = hex.upper_trigram === hex.lower_trigram;
+
+const prevId = hex.id > 1 ? hex.id - 1 : null;
+const nextId = hex.id < 64 ? hex.id + 1 : null;
+const imagePath = `/hex-images/${String(hex.id).padStart(2, "0")}.jpg`;
+
+const byBinary = new Map(hexagrams.map((h) => [h.binary, h]));
+const invertBin = (b: string) => b.split("").map((c) => (c === "1" ? "0" : "1")).join("");
+const reverseBin = (b: string) => b.split("").reverse().join("");
+const cuoHex = byBinary.get(invertBin(hex.binary));
+const zongBinary = reverseBin(hex.binary);
+const zongHex = zongBinary === hex.binary ? null : byBinary.get(zongBinary);
+
+// 互卦 (nuclear): lower = yaos 2-3-4, upper = yaos 3-4-5
+const huBinary = hex.binary.slice(1, 4) + hex.binary.slice(2, 5);
+const huHex = byBinary.get(huBinary);
+
+// Yao sorted by position, then paired for 應位 grid
+const yaoByPos = new Map(hex.yao.map((y) => [y.position, y]));
+const yaoLabels = ["初", "二", "三", "四", "五", "上"];
+const yaoGridOrder = [1, 4, 2, 5, 3, 6]; // displays 初|四  二|五  三|上
+
+// Notes bucketed by semantic role
+const notes = hex.notes ?? [];
+const inSet = (n: Note, keys: string[]) => keys.includes(n.note_type ?? "");
+const guaTuNotes = notes.filter((n) => inSet(n, ["gua_tu", "gua_tu_textbook"]));
+const applicationNotes = notes.filter((n) => inSet(n, ["application"]));
+const gangNotes = notes.filter((n) => inSet(n, ["principle", "overview", "structure", "saying", "warning", "judgment"]));
+const textbookNotes = notes.filter((n) => inSet(n, ["textbook_gua_ci", "textbook_tuan", "textbook_da_xiang"]));
+const handledKeys = new Set([
+  "gua_tu", "gua_tu_textbook",
+  "application",
+  "principle", "overview", "structure", "saying", "warning", "judgment",
+  "textbook_gua_ci", "textbook_tuan", "textbook_da_xiang",
+]);
+const unroutedNotes = notes.filter((n) => !handledKeys.has(n.note_type ?? ""));
+
+const gangGroupOrder = ["principle", "overview", "structure", "judgment", "saying", "warning"];
+const gangGroupLabels: Record<string, string> = {
+  principle: "原理",
+  overview: "綱領",
+  structure: "結構",
+  judgment: "斷語",
+  saying: "口訣",
+  warning: "警示",
+};
+const gangByType: Record<string, Note[]> = {};
+for (const n of gangNotes) {
+  const k = n.note_type ?? "other";
+  (gangByType[k] ||= []).push(n);
+}
+
+const textbookLabels: Record<string, string> = {
+  textbook_gua_ci: "書·卦辭",
+  textbook_tuan: "書·彖傳",
+  textbook_da_xiang: "書·大象",
+};
+
+const trigramSummary = (t: Trigram) =>
+  [t.chinese, t.nature, t.family_role, t.element].filter(Boolean).join(" · ");
+---
+
+<Layout title={`${hex.fullname} · 第 ${hex.id} 卦`} wide>
+  <article class="hex">
+
+    {/* ─── TITLE ─── */}
+    <header class="t">
+      <div class="t-top">
+        <span class="t-num">第 {String(hex.id).padStart(2, "0")} 卦</span>
+        <YaoStack binary={hex.binary} size="md" class="t-yao" />
+        <h1 class="t-name">{hex.fullname}</h1>
+        <span class="t-py">{hex.pinyin}</span>
+        {isPure && <span class="t-badge">八純卦</span>}
+        <span class="t-spacer" />
+        {prevId && <a class="t-nav" href={`/hexagrams/${prevId}`}>← {prevId}</a>}
+        {nextId && <a class="t-nav" href={`/hexagrams/${nextId}`}>{nextId} →</a>}
+      </div>
+
+      <div class="t-rel">
+        {isPure ? (
+          <a class="rel" href={`/trigrams/${upper.id}`}>
+            <i>卦</i><span class="rel-zh">{upper.chinese}</span>
+            <em>{[upper.nature, upper.family_role, upper.element, upper.post_heaven_position].filter(Boolean).join(" · ")}</em>
+          </a>
+        ) : (
+          <>
+            <a class="rel" href={`/trigrams/${upper.id}`}>
+              <i>上</i><span class="rel-zh">{upper.chinese}</span>
+              <em>{[upper.nature, upper.family_role, upper.element].filter(Boolean).join(" · ")}</em>
+            </a>
+            <a class="rel" href={`/trigrams/${lower.id}`}>
+              <i>下</i><span class="rel-zh">{lower.chinese}</span>
+              <em>{[lower.nature, lower.family_role, lower.element].filter(Boolean).join(" · ")}</em>
+            </a>
+          </>
+        )}
+        <span class="rel-div" />
+        {cuoHex && (
+          <a class="rel rel-sm" href={`/hexagrams/${cuoHex.id}`}>
+            <i>錯</i><span class="rel-zh">{cuoHex.chinese}</span><em>#{cuoHex.id}</em>
+          </a>
+        )}
+        {zongHex && (
+          <a class="rel rel-sm" href={`/hexagrams/${zongHex.id}`}>
+            <i>綜</i><span class="rel-zh">{zongHex.chinese}</span><em>#{zongHex.id}</em>
+          </a>
+        )}
+        {huHex && huHex.id !== hex.id && (
+          <a class="rel rel-sm" href={`/hexagrams/${huHex.id}`}>
+            <i>互</i><span class="rel-zh">{huHex.chinese}</span><em>#{huHex.id}</em>
+          </a>
+        )}
+      </div>
+    </header>
+
+    {/* ─── THESIS ─── */}
+    <section class="thesis">
+      {hex.course_name && <div class="thesis-kicker">課程 · {hex.course_name}</div>}
+      {hex.image_summary && <div class="thesis-hero">《{hex.image_summary}》</div>}
+      {hex.ni_summary && (
+        <p class="thesis-ni"><span class="gk">綱</span>{hex.ni_summary}</p>
+      )}
+      {hex.gua_yi && (
+        <p class="thesis-yi"><span class="gk">義</span>{hex.gua_yi}</p>
+      )}
+    </section>
+
+    {/* ─── 讀象 — image + scene + 卦圖 notes ─── */}
+    {(hex.scene || guaTuNotes.length > 0) && (
+      <section class="sec">
+        <h2 class="sec-h">讀象 <span class="sec-sub">illustration ↔ reading</span></h2>
+        <div class="duxiang">
+          <figure class="dx-img">
+            <img src={imagePath} alt={hex.fullname} loading="lazy" />
+            <figcaption>{hex.fullname} · 卦圖</figcaption>
+          </figure>
+          <div class="dx-body">
+            {hex.scene && <p class="dx-scene">{hex.scene}</p>}
+            {guaTuNotes.length > 0 && (
+              <ol class="dx-items">
+                {guaTuNotes.map((n) => (
+                  <li>
+                    <span class={`dx-src dx-src-${n.note_type === "gua_tu_textbook" ? "book" : "ni"}`}>
+                      {n.note_type === "gua_tu_textbook" ? "書" : "倪"}
+                    </span>
+                    <span class="dx-text">{n.content}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </div>
+      </section>
+    )}
+
+    {/* ─── 卦辭 (+ 彖傳 nested) ─── */}
+    {hex.judgment && (
+      <section class="sec">
+        <h2 class="sec-h">卦辭 <span class="sec-sub">judgment · 彖傳釋之</span></h2>
+        <blockquote class="classical">{hex.judgment}</blockquote>
+        {hex.judgment_commentary && (
+          <p class="gloss"><span class="gk">倪</span>{hex.judgment_commentary}</p>
+        )}
+        {hex.book_commentary && (
+          <p class="gloss gloss-book"><span class="gk">書</span>{hex.book_commentary}</p>
+        )}
+        {hex.tuan_fragments && hex.tuan_fragments.length > 0 && (
+          <div class="tuan">
+            <div class="sub-h">彖傳</div>
+            <div class="tuan-cols">
+              {hex.tuan_fragments.map((f) => (
+                <div class="tuan-frag">
+                  <p class="classical-md">{f.text}</p>
+                  {f.commentary && <p class="gloss">{f.commentary}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+    )}
+
+    {/* ─── 大象 ─── */}
+    {hex.image && (
+      <section class="sec">
+        <h2 class="sec-h">大象 <span class="sec-sub">the image — independent wisdom</span></h2>
+        <blockquote class="classical">{hex.image}</blockquote>
+        {hex.image_commentary && <p class="gloss">{hex.image_commentary}</p>}
+      </section>
+    )}
+
+    {/* ─── 爻辭 · 2×3 應位 grid ─── */}
+    {hex.yao && hex.yao.length > 0 && (
+      <section class="sec">
+        <h2 class="sec-h">
+          爻辭
+          <span class="sec-sub">横排為應位 · 中爻 ⦿ 標示</span>
+        </h2>
+        <div class="yao-grid">
+          {yaoGridOrder.map((pos) => {
+            const y = yaoByPos.get(pos);
+            if (!y) return null;
+            const center = pos === 2 || pos === 5;
+            const stem = y.yao_type === "yang" ? "九" : "六";
+            return (
+              <article class:list={["yao-cell", y.yao_type, { center }]}>
+                <header class="yao-h">
+                  <span class={`yao-pos ${y.yao_type}`}>
+                    {yaoLabels[pos - 1]}{stem}
+                  </span>
+                  {center && <span class="yao-mark" title="中爻">⦿</span>}
+                  <span class="yao-idx">爻 {pos}</span>
+                </header>
+                {y.text && <p class="yao-text kaiti">{y.text}</p>}
+                {y.xiao_xiang && (
+                  <p class="yao-r yao-xiang">
+                    <span class="gk">小象</span>
+                    {y.xiao_xiang}
+                    {y.xiang_commentary && <span class="yao-sub"> — {y.xiang_commentary}</span>}
+                  </p>
+                )}
+                {y.ni_commentary && (
+                  <p class="yao-r"><span class="gk">倪</span>{y.ni_commentary}</p>
+                )}
+                {y.ni_interpretation && (
+                  <p class="yao-r yao-lec"><span class="gk">講</span>{y.ni_interpretation}</p>
+                )}
+                {y.gua_tu_item && (
+                  <p class="yao-r yao-tu"><span class="gk gk-tu">圖</span>{y.gua_tu_item}</p>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      </section>
+    )}
+
+    {/* ─── 乾坤專篇 · 文言 / 用爻 ─── */}
+    {(hex.yong_text || hex.wen_yan) && (
+      <section class="sec">
+        <h2 class="sec-h">乾坤專篇 <span class="sec-sub">only 乾 / 坤</span></h2>
+        {hex.yong_text && (
+          <div class="sub-block">
+            <div class="sub-h">用爻</div>
+            <blockquote class="classical">{hex.yong_text}</blockquote>
+            {hex.yong_commentary && <p class="gloss">{hex.yong_commentary}</p>}
+            {hex.yong_xiao_xiang && (
+              <p class="gloss gloss-yin"><span class="gk">小象</span>{hex.yong_xiao_xiang}</p>
+            )}
+            {hex.yong_xiao_xiang_commentary && <p class="gloss">{hex.yong_xiao_xiang_commentary}</p>}
+          </div>
+        )}
+        {hex.wen_yan && (
+          <div class="sub-block">
+            <div class="sub-h">文言傳</div>
+            <div class="wen-yan">{hex.wen_yan}</div>
+          </div>
+        )}
+      </section>
+    )}
+
+    {/* ─── 應用 · 卜例 · 地脈道 · application ─── */}
+    {(hex.anecdote || (hex.dimaidao && hex.dimaidao.length > 0) || applicationNotes.length > 0) && (
+      <section class="sec">
+        <h2 class="sec-h">應用 <span class="sec-sub">divination · 地脈道 · practice</span></h2>
+
+        {hex.anecdote && (
+          <div class="sub-block">
+            <div class="sub-h">卜例</div>
+            <p class="kaiti anec">{hex.anecdote}</p>
+          </div>
+        )}
+
+        {hex.dimaidao && hex.dimaidao.length > 0 && (
+          <div class="sub-block">
+            <div class="sub-h">地脈道 <span class="ct">{hex.dimaidao.length}</span></div>
+            <div class="dm-list">
+              {hex.dimaidao.map((d) => (
+                <div class="dm">
+                  <div class="dm-h">
+                    <span class="dm-t">{d.occupant}</span>
+                    <span class="dm-a">居</span>
+                    <span class="dm-t">{d.occupied_position}</span>
+                    {d.precondition && <span class="dm-c">· {d.precondition}</span>}
+                  </div>
+                  {d.outcomes && d.outcomes.length > 0 && (
+                    <ul class="dm-o">{d.outcomes.map((o) => <li>{o}</li>)}</ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {applicationNotes.length > 0 && (
+          <div class="sub-block">
+            <div class="sub-h">實用</div>
+            <ul class="nl">
+              {applicationNotes.map((n) => (
+                <li>{n.content}{n.source && <span class="src">{n.source}</span>}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+    )}
+
+    {/* ─── 綱目 — principle / structure / saying / warning etc. ─── */}
+    {gangNotes.length > 0 && (
+      <section class="sec">
+        <h2 class="sec-h">綱目 <span class="sec-sub">principles · structure · sayings</span></h2>
+        <div class="gang-grid">
+          {gangGroupOrder.filter((k) => gangByType[k]).map((k) => (
+            <div class={`gang-card gang-${k}`}>
+              <div class="sub-h">{gangGroupLabels[k]} <span class="ct">{gangByType[k].length}</span></div>
+              <ul class="nl">
+                {gangByType[k].map((n) => (
+                  <li>{n.content}{n.source && <span class="src">{n.source}</span>}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {/* ─── 書本對照 · textbook parallels ─── */}
+    {textbookNotes.length > 0 && (
+      <section class="sec sec-muted">
+        <h2 class="sec-h">書本對照 <span class="sec-sub">electronic textbook · parallel text</span></h2>
+        <ul class="nl book">
+          {textbookNotes.map((n) => (
+            <li>
+              <span class="book-k">{textbookLabels[n.note_type ?? ""] ?? n.note_type}</span>
+              {n.content}
+              {n.source && <span class="src">{n.source}</span>}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {/* ─── Dev: any unrouted notes (should be empty) ─── */}
+    {unroutedNotes.length > 0 && (
+      <section class="sec sec-debug">
+        <h2 class="sec-h">未分類 <span class="sec-sub">unrouted — fix routing</span></h2>
+        <ul class="nl">
+          {unroutedNotes.map((n) => (
+            <li>
+              <span class="nt">{n.note_type ?? "null"}</span>
+              {n.content}
+              {n.source && <span class="src">{n.source}</span>}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+  </article>
+</Layout>
+
+<style>
+  .hex { max-width: 1200px; }
+
+  /* ═══ TITLE ═══ */
+  .t {
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--border-strong);
+    margin-bottom: 24px;
+  }
+  .t-top {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .t-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    color: var(--fg-muted);
+    text-transform: uppercase;
+  }
+  .t-yao { align-self: center; }
+  .t-name {
+    font-family: var(--kaiti);
+    font-size: 42px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    margin: 0;
+    color: var(--fg);
+  }
+  .t-py {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fg-muted);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .t-badge {
+    font-family: var(--kaiti);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 2px 8px;
+    background: var(--yang-soft);
+  }
+  .t-spacer { flex: 1; min-width: 12px; }
+  .t-nav {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fg-dim);
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    letter-spacing: 0.06em;
+  }
+  .t-nav:hover { border-color: var(--accent); color: var(--accent); }
+
+  .t-rel {
+    margin-top: 10px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .rel {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--fg-dim);
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+  .rel:hover { border-color: var(--accent); color: var(--accent); }
+  .rel i {
+    font-style: normal;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--fg-muted);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .rel .rel-zh { font-family: var(--kaiti); font-size: 14px; color: var(--fg); }
+  .rel em { font-style: normal; color: var(--fg-muted); font-size: 11px; }
+  .rel-sm { background: transparent; }
+  .rel-div {
+    width: 1px;
+    height: 18px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+
+  /* ═══ THESIS ═══ */
+  .thesis {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    padding: 22px 26px;
+    margin-bottom: 32px;
+  }
+  .thesis-kicker {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .thesis-hero {
+    font-family: var(--kaiti);
+    font-size: 30px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--fg);
+    line-height: 1.3;
+    margin-bottom: 14px;
+  }
+  .thesis-ni, .thesis-yi {
+    font-family: var(--kaiti);
+    font-size: 15px;
+    line-height: 1.85;
+    color: var(--fg);
+    margin: 0 0 6px;
+  }
+  .thesis-yi { color: var(--fg-dim); margin-bottom: 0; }
+
+  /* ═══ SECTIONS ═══ */
+  .sec { margin-bottom: 36px; }
+  .sec-h {
+    font-family: var(--kaiti);
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    color: var(--fg);
+    padding-bottom: 8px;
+    margin: 0 0 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+  .sec-sub {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    color: var(--fg-muted);
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+  .sub-h {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .sub-h .ct {
+    color: var(--fg-muted);
+    margin-left: 4px;
+    font-weight: 400;
+  }
+  .sub-block { margin-bottom: 20px; }
+  .sub-block:last-child { margin-bottom: 0; }
+  .sec-muted { opacity: 0.75; }
+  .sec-muted:hover { opacity: 1; }
+  .sec-debug {
+    background: #fff5d6;
+    border: 1px dashed #c09020;
+    padding: 12px 16px;
+  }
+
+  /* ═══ 讀象 ═══ */
+  .duxiang {
+    display: grid;
+    grid-template-columns: minmax(280px, 42%) 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .dx-img {
+    margin: 0;
+    border: 1px solid var(--border);
+    background: #fff;
+  }
+  .dx-img img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 520px;
+    object-fit: contain;
+  }
+  .dx-img figcaption {
+    padding: 6px 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--fg-muted);
+    text-transform: uppercase;
+    border-top: 1px solid var(--border-soft);
+    text-align: center;
+  }
+  .dx-scene {
+    font-family: var(--kaiti);
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--fg);
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    background: var(--bg-2);
+    border-left: 3px solid var(--accent);
+  }
+  .dx-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: dx;
+  }
+  .dx-items li {
+    counter-increment: dx;
+    padding: 8px 0 8px 28px;
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--fg-dim);
+    border-top: 1px solid var(--border-soft);
+    position: relative;
+  }
+  .dx-items li:first-child { border-top: none; padding-top: 4px; }
+  .dx-items li::before {
+    content: counter(dx);
+    position: absolute;
+    left: 0;
+    top: 9px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-muted);
+    min-width: 20px;
+    text-align: right;
+    padding-right: 4px;
+  }
+  .dx-src {
+    display: inline-block;
+    font-family: var(--kaiti);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    padding: 1px 5px;
+    margin-right: 8px;
+    vertical-align: 1px;
+  }
+  .dx-src-ni { color: var(--accent); border: 1px solid var(--accent); background: var(--yang-soft); }
+  .dx-src-book { color: var(--yin); border: 1px solid var(--yin); background: var(--yin-soft); }
+
+  /* ═══ CLASSICAL TEXT ═══ */
+  .classical {
+    font-family: var(--kaiti);
+    font-size: 20px;
+    line-height: 1.8;
+    color: var(--fg);
+    margin: 0 0 12px;
+    padding: 12px 20px;
+    background: var(--bg-2);
+    border-left: 3px solid var(--fg);
+    letter-spacing: 0.04em;
+  }
+  .classical-md {
+    font-family: var(--kaiti);
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--fg);
+    margin: 0 0 4px;
+  }
+  .gloss {
+    font-size: 13.5px;
+    line-height: 1.8;
+    color: var(--fg-dim);
+    margin: 0 0 10px;
+    padding-left: 14px;
+    border-left: 2px solid var(--border);
+    white-space: pre-wrap;
+  }
+  .gloss:last-child { margin-bottom: 0; }
+  .gloss-book { border-left-color: var(--yin-soft); }
+  .gloss-yin { border-left-color: var(--yin-soft); color: var(--yin); }
+  .gk {
+    font-family: var(--kaiti);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    color: var(--fg-muted);
+    margin-right: 8px;
+    padding: 1px 5px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    vertical-align: 1px;
+    font-weight: 500;
+  }
+  .gk-tu { color: var(--accent); border-color: var(--accent); background: var(--yang-soft); }
+
+  /* ═══ 彖傳 ═══ */
+  .tuan { margin-top: 18px; }
+  .tuan-cols {
+    column-count: 2;
+    column-gap: 28px;
+  }
+  .tuan-frag {
+    break-inside: avoid;
+    margin-bottom: 14px;
+  }
+  .tuan-frag:last-child { margin-bottom: 0; }
+
+  /* ═══ 爻辭 · 2×3 應位 grid ═══ */
+  .yao-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    position: relative;
+  }
+  .yao-cell {
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    background: var(--bg);
+    min-width: 0;
+  }
+  .yao-cell.center {
+    background: var(--bg-2);
+    border-color: var(--border-strong);
+  }
+  .yao-h {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--border-soft);
+    padding-bottom: 5px;
+  }
+  .yao-pos {
+    font-family: var(--kaiti);
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+  }
+  .yao-pos.yang { color: var(--yang); }
+  .yao-pos.yin { color: var(--yin); }
+  .yao-mark {
+    font-size: 12px;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .yao-idx {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--fg-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .yao-text {
+    font-family: var(--kaiti);
+    font-size: 16px;
+    line-height: 1.75;
+    color: var(--fg);
+    margin: 0 0 8px;
+    letter-spacing: 0.03em;
+  }
+  .yao-r {
+    margin: 0 0 4px;
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: var(--fg-dim);
+  }
+  .yao-r:last-child { margin-bottom: 0; }
+  .yao-xiang { color: var(--yin); }
+  .yao-lec { color: var(--fg-muted); font-style: italic; font-size: 12px; }
+  .yao-tu {
+    padding: 4px 10px;
+    background: var(--yang-soft);
+    border-left: 2px solid var(--accent);
+    margin-top: 6px;
+    color: var(--accent-dim);
+  }
+  .yao-sub { color: var(--fg-muted); }
+
+  /* ═══ 應用 ═══ */
+  .anec {
+    font-size: 15.5px;
+    line-height: 1.9;
+    color: var(--fg);
+    margin: 0;
+    padding: 10px 16px;
+    background: var(--bg-2);
+    border-left: 3px solid var(--accent-soft);
+    letter-spacing: 0.02em;
+  }
+  .dm-list {
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .dm {
+    padding: 10px 14px;
+    border-top: 1px solid var(--border-soft);
+  }
+  .dm:first-child { border-top: none; }
+  .dm-h {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+  .dm-t {
+    font-family: var(--kaiti);
+    font-size: 14px;
+    color: var(--fg);
+    padding: 1px 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-2);
+  }
+  .dm-a {
+    color: var(--fg-muted);
+    font-family: var(--kaiti);
+    font-size: 12px;
+  }
+  .dm-c { font-size: 11.5px; color: var(--fg-muted); }
+  .dm-o {
+    margin: 4px 0 0;
+    padding-left: 18px;
+    font-size: 13px;
+    color: var(--fg-dim);
+    line-height: 1.75;
+  }
+
+  /* ═══ 綱目 · multi-type card grid ═══ */
+  .gang-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .gang-card {
+    border: 1px solid var(--border);
+    background: var(--bg);
+    padding: 14px 16px;
+  }
+
+  /* ═══ 書本對照 ═══ */
+  .book-k {
+    display: inline-block;
+    font-family: var(--kaiti);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    color: var(--yin);
+    border: 1px solid var(--yin);
+    background: var(--yin-soft);
+    padding: 1px 6px;
+    margin-right: 10px;
+    vertical-align: 1px;
+  }
+
+  /* ═══ 文言 ═══ */
+  .wen-yan {
+    white-space: pre-wrap;
+    font-family: var(--kaiti);
+    font-size: 14px;
+    line-height: 2;
+    color: var(--fg-dim);
+    letter-spacing: 0.02em;
+    max-height: 420px;
+    overflow-y: auto;
+    padding: 14px 18px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+  }
+
+  /* ═══ notes list ═══ */
+  .nl { list-style: none; margin: 0; padding: 0; }
+  .nl li {
+    padding: 7px 0;
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--fg-dim);
+    border-top: 1px solid var(--border-soft);
+  }
+  .nl li:first-child { border-top: none; padding-top: 0; }
+  .nl .src {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--fg-muted);
+    margin-left: 8px;
+    letter-spacing: 0.04em;
+  }
+  .nl .nt {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: var(--fg-muted);
+    text-transform: uppercase;
+    margin-right: 8px;
+    padding: 1px 5px;
+    background: var(--bg-3);
+  }
+
+  .kaiti { font-family: var(--kaiti); }
+
+  /* ═══ responsive ═══ */
+  @media (max-width: 980px) {
+    .duxiang { grid-template-columns: 1fr; }
+    .tuan-cols { column-count: 1; }
+  }
+  @media (max-width: 780px) {
+    .t-name { font-size: 32px; }
+    .thesis-hero { font-size: 24px; }
+    .yao-grid { grid-template-columns: 1fr; }
+    .gang-grid { grid-template-columns: 1fr; }
+  }
+</style>

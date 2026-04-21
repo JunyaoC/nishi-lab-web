@@ -1,0 +1,195 @@
+---
+import "~/styles/global.css";
+import { ClientRouter } from "astro:transitions";
+import type { Trigram, Hexagram } from "~/types";
+import trigramsJson from "~/data/trigrams.json";
+import hexagramsJson from "~/data/hexagrams.json";
+import YaoStack from "~/components/YaoStack.astro";
+
+interface Props {
+  title?: string;
+  wide?: boolean;
+}
+
+const { title = "天紀 · 易卦", wide = false } = Astro.props;
+const trigrams = trigramsJson as unknown as Trigram[];
+const hexagrams = hexagramsJson as unknown as Hexagram[];
+
+const path = Astro.url.pathname.replace(/\/$/, "");
+const isActive = (href: string) => path === href.replace(/\/$/, "");
+
+// 九宮八卦（後天文王圖） — reading left-to-right, top-to-bottom
+// row1: 東南 巽 / 正南 離 / 西南 坤
+// row2: 正東 震 / 中       / 正西 兌
+// row3: 東北 艮 / 正北 坎 / 西北 乾
+const jiugongOrder: (number | null)[] = [5, 3, 8, 4, null, 2, 7, 6, 1];
+const trigramById = new Map(trigrams.map((t) => [t.id, t]));
+---
+
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="倪師天紀 · 易卦資料庫" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>{title}</title>
+    <ClientRouter />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" transition:persist>
+        <a href="/" class="brand" style="display:block;">
+          <span class="brand-main">天紀 · 易卦</span>
+          <span class="brand-sub">nishi-lab</span>
+        </a>
+
+        <div class="sidebar-section">
+          <div class="bagua-header">
+            <h4>九宮八卦 · 篩選器</h4>
+            <span class="bagua-hint">點擊篩選 · 中央清除</span>
+          </div>
+          <div class="sidebar-bagua" id="bagua-filter">
+            {jiugongOrder.map((id) => {
+              if (id === null) {
+                return (
+                  <button type="button" class="bagua-center" data-action="reset" aria-label="清除篩選">
+                    <span class="ch">中</span>
+                    <span class="sub">五</span>
+                  </button>
+                );
+              }
+              const t = trigramById.get(id)!;
+              return (
+                <button
+                  type="button"
+                  class="bagua-cell"
+                  data-trigram-id={t.id}
+                  data-trigram-name={t.chinese}
+                  aria-label={`篩選 ${t.chinese}`}
+                >
+                  <span class="luoshu">{t.post_heaven_number}</span>
+                  <span class="nature">{t.nature}</span>
+                  <YaoStack binary={t.binary} size="sm" />
+                  <span class="zh">{t.chinese}</span>
+                  <span class="role">{t.family_role}</span>
+                  <span class="dir">{t.post_heaven_position}</span>
+                  <a
+                    class="bagua-info"
+                    href={`/trigrams/${t.id}`}
+                    title={`${t.chinese} 詳情`}
+                    aria-label={`${t.chinese} 詳情`}
+                  >→</a>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="hex-list-header">
+            <h4>六十四卦 · 文王序</h4>
+            <span class="hex-count" id="hex-count">64 / 64</span>
+          </div>
+          <ul class="sidebar-hex-list" id="hex-list">
+            {hexagrams.map((h) => (
+              <li data-upper={h.upper_trigram} data-lower={h.lower_trigram}>
+                <a
+                  href={`/hexagrams/${h.id}`}
+                  class:list={["", { active: isActive(`/hexagrams/${h.id}`) }]}
+                >
+                  <span class="num">{h.id}</span>
+                  <YaoStack binary={h.binary} size="xs" />
+                  <span class="zh">{h.fullname}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <div id="hex-empty" class="hex-empty" hidden>無匹配之卦</div>
+        </div>
+      </aside>
+
+      <main class:list={["main", { wide }]}>
+        <slot />
+        <footer class="footer">
+          倪師天紀 資料庫 · 本地 SQLite → JSON → Astro
+        </footer>
+      </main>
+    </div>
+
+    <script is:inline>
+      (function () {
+        const KEY = "bagua-filter";
+        const bagua = document.getElementById("bagua-filter");
+        const list = document.getElementById("hex-list");
+        const count = document.getElementById("hex-count");
+        const empty = document.getElementById("hex-empty");
+        if (!bagua || !list || !count || !empty) return;
+        if (bagua.dataset.bound === "1") return;
+        bagua.dataset.bound = "1";
+
+        const items = Array.from(list.querySelectorAll("li[data-upper]"));
+        const total = items.length;
+
+        const saved = sessionStorage.getItem(KEY);
+        const selected = new Set(saved ? JSON.parse(saved) : []);
+
+        function persist() {
+          sessionStorage.setItem(KEY, JSON.stringify([...selected]));
+        }
+
+        function apply() {
+          let visible = 0;
+          for (const li of items) {
+            const t = new Set([li.dataset.upper, li.dataset.lower]);
+            const ok = selected.size === 0 || [...selected].every((s) => t.has(s));
+            li.hidden = !ok;
+            if (ok) visible++;
+          }
+          count.textContent =
+            selected.size === 0 ? `${total} / ${total}` : `${visible} / ${total}`;
+          empty.hidden = visible !== 0;
+          bagua.querySelectorAll("[data-trigram-id]").forEach((btn) => {
+            btn.classList.toggle("active", selected.has(btn.dataset.trigramId));
+          });
+        }
+
+        function syncActiveLink() {
+          const path = location.pathname.replace(/\/$/, "");
+          list.querySelectorAll("a").forEach((a) => {
+            const href = a.getAttribute("href").replace(/\/$/, "");
+            a.classList.toggle("active", href === path);
+          });
+        }
+
+        bagua.addEventListener("click", (e) => {
+          if (e.target.closest(".bagua-info")) return;
+          const reset = e.target.closest('[data-action="reset"]');
+          if (reset) {
+            selected.clear();
+            persist();
+            apply();
+            return;
+          }
+          const cell = e.target.closest("[data-trigram-id]");
+          if (!cell) return;
+          e.preventDefault();
+          const id = cell.dataset.trigramId;
+          if (selected.has(id)) selected.delete(id);
+          else selected.add(id);
+          persist();
+          apply();
+        });
+
+        document.addEventListener("astro:after-swap", syncActiveLink);
+        apply();
+        syncActiveLink();
+      })();
+    </script>
+  </body>
+</html>
