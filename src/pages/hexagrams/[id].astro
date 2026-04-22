@@ -3,10 +3,94 @@ import Layout from "~/layouts/Layout.astro";
 import type { Hexagram, Trigram, Note } from "~/types";
 import hexagramsJson from "~/data/hexagrams.json";
 import trigramsJson from "~/data/trigrams.json";
+import modernJson from "~/data/hexagrams_modern.json";
 import YaoStack from "~/components/YaoStack.astro";
 
 const hexagrams = hexagramsJson as unknown as Hexagram[];
 const trigrams = trigramsJson as unknown as Trigram[];
+
+type ModernReading = {
+  id: number;
+  chinese: string;
+  fullname: string;
+  upper: string;
+  lower: string;
+  essence: string;
+  title: string;
+  tldr: string;
+  body: string;
+};
+const modernMap = modernJson as unknown as Record<string, ModernReading>;
+
+// Minimal markdown → HTML for our controlled subset.
+// Handles: ## h2, **bold**, `> quote`, `- ul`, `1. ol`, paragraphs.
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function inline(s: string): string {
+  let out = escapeHtml(s);
+  out = out.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  out = out.replace(/`([^`]+)`/g, "<code>$1</code>");
+  return out;
+}
+function renderMd(md: string): string {
+  if (!md) return "";
+  const lines = md.replace(/\r\n/g, "\n").split("\n");
+  const out: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (!line.trim()) { i++; continue; }
+    // H2
+    if (/^##\s+/.test(line)) {
+      out.push(`<h3 class="mr-h3">${inline(line.replace(/^##\s+/, ""))}</h3>`);
+      i++; continue;
+    }
+    // Blockquote (one or more consecutive `>` lines)
+    if (/^>\s?/.test(line)) {
+      const buf: string[] = [];
+      while (i < lines.length && /^>\s?/.test(lines[i])) {
+        buf.push(lines[i].replace(/^>\s?/, ""));
+        i++;
+      }
+      out.push(`<blockquote class="mr-q">${inline(buf.join(" "))}</blockquote>`);
+      continue;
+    }
+    // Unordered list
+    if (/^-\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^-\s+/.test(lines[i])) {
+        items.push(`<li>${inline(lines[i].replace(/^-\s+/, ""))}</li>`);
+        i++;
+      }
+      out.push(`<ul class="mr-ul">${items.join("")}</ul>`);
+      continue;
+    }
+    // Ordered list
+    if (/^\d+\.\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
+        items.push(`<li>${inline(lines[i].replace(/^\d+\.\s+/, ""))}</li>`);
+        i++;
+      }
+      out.push(`<ol class="mr-ol">${items.join("")}</ol>`);
+      continue;
+    }
+    // Paragraph (collect until blank line or block marker)
+    const buf: string[] = [line];
+    i++;
+    while (
+      i < lines.length &&
+      lines[i].trim() &&
+      !/^(##\s+|>\s?|-\s+|\d+\.\s+)/.test(lines[i])
+    ) {
+      buf.push(lines[i]);
+      i++;
+    }
+    out.push(`<p class="mr-p">${inline(buf.join(" "))}</p>`);
+  }
+  return out.join("\n");
+}
 
 export async function getStaticPaths() {
   const { default: data } = await import("~/data/hexagrams.json");
@@ -77,10 +161,29 @@ const textbookLabels: Record<string, string> = {
 
 const trigramSummary = (t: Trigram) =>
   [t.chinese, t.nature, t.family_role, t.element].filter(Boolean).join(" · ");
+
+const modern = modernMap[String(hex.id)] ?? null;
+const modernTldrHtml = modern ? renderMd(modern.tldr) : "";
+const modernBodyHtml = modern ? renderMd(modern.body) : "";
+
+// Split gua_tu notes by source: 易經大彩圖 = picture reading; 人間道 = signs
+const isTextbookPic = (n: Note) =>
+  n.note_type === "gua_tu_textbook" ||
+  (n.note_type === "gua_tu" && /易經|大彩圖/.test(n.source ?? ""));
+const pictureNotes = guaTuNotes.filter(isTextbookPic);
+const signNotes = guaTuNotes.filter((n) => !isTextbookPic(n));
 ---
 
 <Layout title={`${hex.fullname} · 第 ${hex.id} 卦`} wide>
-  <article class="hex">
+  <article class="hex" data-mode={modern ? "modern" : "original"}>
+
+    {/* ─── MODE TOGGLE ─── */}
+    {modern && (
+      <div class="mode-toggle" role="tablist">
+        <button type="button" class="mt-btn active" data-mode="modern" role="tab" aria-selected="true">現代讀本</button>
+        <button type="button" class="mt-btn" data-mode="original" role="tab" aria-selected="false">原始資料</button>
+      </div>
+    )}
 
     {/* ─── TITLE ─── */}
     <header class="t">
@@ -131,6 +234,137 @@ const trigramSummary = (t: Trigram) =>
         )}
       </div>
     </header>
+
+    {/* ─── MODERN READING (default view) ─── */}
+    {modern && (
+      <div class="view-modern" data-tab="meaning">
+        <section class="mr-hero">
+          <div class="mr-kicker">現代讀本 · modern reading</div>
+          <h2 class="mr-title">{modern.title || modern.essence}</h2>
+          {modern.essence && <p class="mr-essence">{modern.essence}</p>}
+        </section>
+
+        <div class="mr-tabs" role="tablist">
+          <button type="button" class="mr-tab active" data-tab="meaning" role="tab" aria-selected="true">
+            卦義 <span class="mr-tab-en">meaning</span>
+          </button>
+          <button type="button" class="mr-tab" data-tab="picture" role="tab" aria-selected="false">
+            占卜讀象 <span class="mr-tab-en">reading the picture</span>
+          </button>
+          <button type="button" class="mr-tab" data-tab="signs" role="tab" aria-selected="false">
+            應象 <span class="mr-tab-en">signs &amp; divinations</span>
+          </button>
+        </div>
+
+        {/* ── TAB 1: 卦義 ── */}
+        <div class="mr-panel" data-panel="meaning">
+          {modernTldrHtml && (
+            <section class="mr-tldr">
+              <div class="mr-tldr-k">TL;DR</div>
+              <div class="mr-tldr-body" set:html={modernTldrHtml} />
+            </section>
+          )}
+          <section class="mr-body" set:html={modernBodyHtml} />
+        </div>
+
+        {/* ── TAB 2: 占卜讀象 ── */}
+        <div class="mr-panel" data-panel="picture">
+          <div class="mp-intro">
+            卜得此卦時，畫面上看到的是什麼，每個元素象徵什麼。
+          </div>
+          <div class="mp-duxiang">
+            <figure class="mp-img">
+              <img src={imagePath} alt={hex.fullname} loading="lazy" />
+              <figcaption>{hex.fullname} · 卦圖</figcaption>
+            </figure>
+            <div class="mp-body">
+              {hex.scene && (
+                <div class="mp-scene-block">
+                  <div class="mp-sub">畫面（古）</div>
+                  <p class="mp-scene">{hex.scene}</p>
+                </div>
+              )}
+              {hex.image_summary && (
+                <div class="mp-scene-block">
+                  <div class="mp-sub">意象</div>
+                  <p class="mp-imgsum">{hex.image_summary}</p>
+                </div>
+              )}
+              {hex.course_name && (
+                <div class="mp-scene-block">
+                  <div class="mp-sub">大六壬課名</div>
+                  <p class="mp-course">{hex.course_name}</p>
+                </div>
+              )}
+            </div>
+          </div>
+          {pictureNotes.length > 0 && (
+            <div class="mp-items-wrap">
+              <div class="mp-sub">元素逐條</div>
+              <ol class="mp-items">
+                {pictureNotes.map((n) => (
+                  <li>
+                    <span class="mp-text">{n.content}</span>
+                    {n.source && <span class="mp-src">{n.source}</span>}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+        </div>
+
+        {/* ── TAB 3: 應象 ── */}
+        <div class="mr-panel" data-panel="signs">
+          <div class="mp-intro">
+            卜得此卦，人事、時間、方位、健康、婚姻等的應象與快速查閱。
+          </div>
+          {hex.anecdote && (
+            <section class="mp-anec">
+              <div class="mp-sub">卜例 · 歷史典故</div>
+              <p>{hex.anecdote}</p>
+            </section>
+          )}
+          {signNotes.length > 0 && (
+            <section class="mp-signs">
+              <div class="mp-sub">應象條列 <span class="mp-ct">{signNotes.length}</span></div>
+              <ul class="mp-sign-list">
+                {signNotes.map((n) => (
+                  <li>
+                    <span class="mp-text">{n.content}</span>
+                    {n.source && <span class="mp-src">{n.source}</span>}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {hex.dimaidao && hex.dimaidao.length > 0 && (
+            <section class="mp-dm">
+              <div class="mp-sub">地脈道 · 居位應象 <span class="mp-ct">{hex.dimaidao.length}</span></div>
+              <div class="mp-dm-list">
+                {hex.dimaidao.map((d) => (
+                  <div class="mp-dm-card">
+                    <div class="mp-dm-h">
+                      <span class="mp-dm-t">{d.occupant}</span>
+                      <span class="mp-dm-a">居</span>
+                      <span class="mp-dm-t">{d.occupied_position}</span>
+                      {d.precondition && <span class="mp-dm-c">· {d.precondition}</span>}
+                    </div>
+                    {d.outcomes && d.outcomes.length > 0 && (
+                      <ul class="mp-dm-o">{d.outcomes.map((o) => <li>{o}</li>)}</ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+          {!hex.anecdote && signNotes.length === 0 && (!hex.dimaidao || hex.dimaidao.length === 0) && (
+            <div class="mp-empty">此卦暫無應象資料。</div>
+          )}
+        </div>
+      </div>
+    )}
+
+    <div class="view-original">
 
     {/* ─── THESIS ─── */}
     <section class="thesis">
@@ -374,11 +608,460 @@ const trigramSummary = (t: Trigram) =>
         </ul>
       </section>
     )}
+
+    </div>{/* /view-original */}
   </article>
+
+  <script is:inline>
+    (function () {
+      const article = document.querySelector("article.hex");
+      if (!article) return;
+      const btns = article.querySelectorAll(".mt-btn");
+      const stored = (() => {
+        try { return localStorage.getItem("hex-mode"); } catch { return null; }
+      })();
+      if (stored === "original" || stored === "modern") {
+        article.setAttribute("data-mode", stored);
+        btns.forEach((b) => {
+          const active = b.getAttribute("data-mode") === stored;
+          b.classList.toggle("active", active);
+          b.setAttribute("aria-selected", active ? "true" : "false");
+        });
+      }
+      btns.forEach((b) => {
+        b.addEventListener("click", () => {
+          const mode = b.getAttribute("data-mode");
+          if (!mode) return;
+          article.setAttribute("data-mode", mode);
+          btns.forEach((x) => {
+            const active = x === b;
+            x.classList.toggle("active", active);
+            x.setAttribute("aria-selected", active ? "true" : "false");
+          });
+          try { localStorage.setItem("hex-mode", mode); } catch {}
+        });
+      });
+
+      // Modern-view tabs
+      const modernView = article.querySelector(".view-modern");
+      if (modernView) {
+        const tabs = modernView.querySelectorAll(".mr-tab");
+        const panels = modernView.querySelectorAll(".mr-panel");
+        const setTab = (name) => {
+          modernView.setAttribute("data-tab", name);
+          tabs.forEach((t) => {
+            const active = t.getAttribute("data-tab") === name;
+            t.classList.toggle("active", active);
+            t.setAttribute("aria-selected", active ? "true" : "false");
+          });
+          panels.forEach((p) => {
+            p.style.display = p.getAttribute("data-panel") === name ? "block" : "none";
+          });
+        };
+        const storedTab = (() => {
+          try { return localStorage.getItem("hex-tab"); } catch { return null; }
+        })();
+        const initialTab = (storedTab && modernView.querySelector(`[data-panel="${storedTab}"]`))
+          ? storedTab
+          : (modernView.getAttribute("data-tab") || "meaning");
+        setTab(initialTab);
+        tabs.forEach((t) => {
+          t.addEventListener("click", () => {
+            const name = t.getAttribute("data-tab");
+            if (!name) return;
+            setTab(name);
+            try { localStorage.setItem("hex-tab", name); } catch {}
+          });
+        });
+      }
+    })();
+  </script>
 </Layout>
 
 <style>
   .hex { max-width: 1200px; }
+
+  /* ═══ MODE TOGGLE ═══ */
+  .mode-toggle {
+    display: inline-flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    margin-bottom: 18px;
+  }
+  .mt-btn {
+    font-family: var(--kaiti);
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    padding: 6px 16px;
+    background: transparent;
+    color: var(--fg-dim);
+    border: none;
+    border-right: 1px solid var(--border);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .mt-btn:last-child { border-right: none; }
+  .mt-btn:hover { color: var(--accent); }
+  .mt-btn.active {
+    background: var(--fg);
+    color: var(--bg);
+  }
+
+  /* Mode-based show/hide */
+  .hex[data-mode="modern"] .view-original { display: none; }
+  .hex[data-mode="original"] .view-modern { display: none; }
+
+  /* ═══ MODERN READING ═══ */
+  .mr-hero {
+    margin: 8px 0 28px;
+    padding: 22px 26px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+  }
+  .mr-kicker {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .mr-title {
+    font-family: var(--kaiti);
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--fg);
+    line-height: 1.35;
+    margin: 0 0 10px;
+  }
+  .mr-essence {
+    font-family: var(--kaiti);
+    font-size: 15px;
+    line-height: 1.85;
+    color: var(--fg-dim);
+    margin: 0;
+  }
+  .mr-tldr {
+    margin: 0 0 32px;
+    padding: 18px 22px;
+    border: 1px solid var(--accent);
+    background: var(--yang-soft);
+  }
+  .mr-tldr-k {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .mr-tldr-body .mr-p,
+  .mr-tldr-body .mr-ul li,
+  .mr-tldr-body .mr-ol li {
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--fg);
+  }
+  .mr-tldr-body .mr-p { margin: 0 0 8px; }
+  .mr-tldr-body .mr-ul,
+  .mr-tldr-body .mr-ol { margin: 0 0 4px; padding-left: 20px; }
+
+  .mr-body .mr-h3 {
+    font-family: var(--kaiti);
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    color: var(--fg);
+    margin: 32px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .mr-body .mr-h3:first-child { margin-top: 0; }
+  .mr-body .mr-p {
+    font-size: 14.5px;
+    line-height: 1.95;
+    color: var(--fg);
+    margin: 0 0 14px;
+  }
+  .mr-body .mr-ul,
+  .mr-body .mr-ol {
+    margin: 0 0 16px;
+    padding-left: 22px;
+    font-size: 14px;
+    line-height: 1.9;
+    color: var(--fg);
+  }
+  .mr-body .mr-ul li,
+  .mr-body .mr-ol li { margin-bottom: 4px; }
+  .mr-body .mr-q {
+    font-family: var(--kaiti);
+    font-size: 17px;
+    line-height: 1.85;
+    color: var(--fg);
+    margin: 18px 0;
+    padding: 14px 20px;
+    background: var(--bg-2);
+    border-left: 3px solid var(--fg);
+    letter-spacing: 0.04em;
+  }
+  .mr-body strong, .mr-tldr-body strong {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .mr-body code, .mr-tldr-body code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    padding: 1px 5px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+  }
+
+  /* ═══ MODERN TABS ═══ */
+  .mr-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border-strong);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .mr-tab {
+    font-family: var(--kaiti);
+    font-size: 15px;
+    letter-spacing: 0.14em;
+    padding: 10px 20px;
+    background: transparent;
+    color: var(--fg-dim);
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    cursor: pointer;
+    transition: all .15s;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .mr-tab:hover { color: var(--accent); }
+  .mr-tab.active {
+    color: var(--fg);
+    border-bottom-color: var(--accent);
+  }
+  .mr-tab-en {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    font-weight: 400;
+  }
+  .mr-tab.active .mr-tab-en { color: var(--accent); }
+
+  /* Panel visibility driven by data-tab on .view-modern */
+  .view-modern .mr-panel { display: none; }
+  .view-modern[data-tab="meaning"] .mr-panel[data-panel="meaning"],
+  .view-modern[data-tab="picture"] .mr-panel[data-panel="picture"],
+  .view-modern[data-tab="signs"]   .mr-panel[data-panel="signs"] {
+    display: block;
+  }
+
+  /* ═══ PICTURE / SIGNS PANELS ═══ */
+  .mp-intro {
+    font-family: var(--kaiti);
+    font-size: 13.5px;
+    color: var(--fg-muted);
+    margin-bottom: 20px;
+    padding: 8px 14px;
+    background: var(--bg-2);
+    border-left: 3px solid var(--border-strong);
+  }
+  .mp-sub {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .mp-ct {
+    font-family: var(--mono);
+    color: var(--fg-muted);
+    margin-left: 4px;
+    font-weight: 400;
+  }
+  .mp-duxiang {
+    display: grid;
+    grid-template-columns: minmax(260px, 40%) 1fr;
+    gap: 24px;
+    align-items: start;
+    margin-bottom: 24px;
+  }
+  .mp-img {
+    margin: 0;
+    border: 1px solid var(--border);
+    background: #fff;
+  }
+  .mp-img img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 520px;
+    object-fit: contain;
+  }
+  .mp-img figcaption {
+    padding: 6px 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--fg-muted);
+    text-transform: uppercase;
+    border-top: 1px solid var(--border-soft);
+    text-align: center;
+  }
+  .mp-scene-block { margin-bottom: 14px; }
+  .mp-scene-block:last-child { margin-bottom: 0; }
+  .mp-scene {
+    font-family: var(--kaiti);
+    font-size: 15px;
+    line-height: 1.85;
+    color: var(--fg);
+    margin: 0;
+    padding: 10px 14px;
+    background: var(--bg-2);
+    border-left: 3px solid var(--accent);
+  }
+  .mp-imgsum, .mp-course {
+    font-family: var(--kaiti);
+    font-size: 14px;
+    color: var(--fg-dim);
+    margin: 0;
+    padding: 6px 12px;
+    border-left: 2px solid var(--border);
+  }
+  .mp-items-wrap { margin-top: 10px; }
+  .mp-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: mp;
+    border-top: 1px solid var(--border-soft);
+  }
+  .mp-items li {
+    counter-increment: mp;
+    padding: 9px 0 9px 32px;
+    font-size: 13.5px;
+    line-height: 1.8;
+    color: var(--fg);
+    border-bottom: 1px solid var(--border-soft);
+    position: relative;
+  }
+  .mp-items li::before {
+    content: counter(mp);
+    position: absolute;
+    left: 0;
+    top: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-muted);
+    min-width: 22px;
+    text-align: right;
+    padding-right: 6px;
+  }
+  .mp-text { }
+  .mp-src {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--fg-muted);
+    margin-left: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Signs tab */
+  .mp-anec {
+    margin-bottom: 24px;
+  }
+  .mp-anec p {
+    font-family: var(--kaiti);
+    font-size: 15.5px;
+    line-height: 1.9;
+    color: var(--fg);
+    margin: 0;
+    padding: 10px 16px;
+    background: var(--bg-2);
+    border-left: 3px solid var(--accent-soft);
+  }
+  .mp-signs { margin-bottom: 24px; }
+  .mp-sign-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0;
+    border: 1px solid var(--border);
+  }
+  .mp-sign-list li {
+    padding: 10px 14px;
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--fg);
+    border-bottom: 1px solid var(--border-soft);
+    border-right: 1px solid var(--border-soft);
+  }
+  .mp-dm { margin-bottom: 8px; }
+  .mp-dm-list {
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .mp-dm-card {
+    padding: 10px 14px;
+    border-top: 1px solid var(--border-soft);
+  }
+  .mp-dm-card:first-child { border-top: none; }
+  .mp-dm-h {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+  .mp-dm-t {
+    font-family: var(--kaiti);
+    font-size: 14px;
+    color: var(--fg);
+    padding: 1px 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-2);
+  }
+  .mp-dm-a {
+    color: var(--fg-muted);
+    font-family: var(--kaiti);
+    font-size: 12px;
+  }
+  .mp-dm-c { font-size: 11.5px; color: var(--fg-muted); }
+  .mp-dm-o {
+    margin: 4px 0 0;
+    padding-left: 18px;
+    font-size: 13px;
+    color: var(--fg-dim);
+    line-height: 1.75;
+  }
+  .mp-empty {
+    font-family: var(--kaiti);
+    font-size: 13px;
+    color: var(--fg-muted);
+    padding: 20px;
+    text-align: center;
+    border: 1px dashed var(--border);
+  }
+
+  @media (max-width: 980px) {
+    .mp-duxiang { grid-template-columns: 1fr; }
+  }
 
   /* ═══ TITLE ═══ */
   .t {
